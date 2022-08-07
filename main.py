@@ -1,6 +1,18 @@
 import tweepy
+import gspread
 
-# API keys
+# Sheet being used as db: https://docs.google.com/spreadsheets/d/1gf6DMcryo7ldYNgRPvT6XFQkIBEtcPZwXyWTU1Z4Yyc/edit?usp=sharing
+sa = gspread.service_account(filename = "service_account.json")
+sh = sa.open("twitterSourcer")
+wks = sh.worksheet("Data")
+allInvestors = sh.worksheet("Investors")
+
+
+# set the ID for this week
+lastWeeksID = wks.acell('A' + str(wks.row_count)).value
+thisWeeksID = int(lastWeeksID) + 1
+
+# API keys for Twitter
 api_key = "oFtEvDTIr5RNXApaB16Ilkve5"
 api_secrets = "b2XBs8YZZfxW71Wa51hxi04wUdd3yFDIzQMsIbwcTVe884R9Fc"
 access_token = "769270874721624064-gH3qwZKSNuZC2M3uz3XtjJBafQVKu0r"
@@ -18,18 +30,14 @@ try:
 except:
     print('Failed authentication')
 
-# khosla ventures latest 5 follows
-khoslaventures = api.get_user(screen_name = 'khoslaventures')
-khoslaFollows = khoslaventures.friends()
-print('Latest Khosla Follows:')
-for i in range (0, 5):
-    print(str(khoslaFollows[i].screen_name))
-
-# a16z latest 5 follows
-a16z = api.get_user(screen_name = 'a16z')
-a16zFollows = a16z.friends()
-print('Latest a16z Follows:')
-for i in range (0, 5):
-    print(str(a16zFollows[i].screen_name))
-
-
+numRows = allInvestors.row_count
+for i in range (0, numRows):
+    # get investor info from sheets
+    twitterHandle = allInvestors.acell('A' + str((i + 1))).value
+    vcName = allInvestors.acell('B' + str((i + 1))).value
+    
+    # get latest 5 each investor twitter account follows
+    twitterUser = api.get_user(screen_name = twitterHandle)
+    twitterFollows = twitterUser.friends()
+    for i in range (0, 5):
+        wks.append_row([thisWeeksID, (str(twitterFollows[i].screen_name) + '_' + vcName), twitterFollows[i].screen_name, vcName])
