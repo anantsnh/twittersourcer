@@ -1,5 +1,6 @@
 import tweepy
 import gspread
+import time
 
 # Sheet being used as db: https://docs.google.com/spreadsheets/d/1gf6DMcryo7ldYNgRPvT6XFQkIBEtcPZwXyWTU1Z4Yyc/edit?usp=sharing
 sa = gspread.service_account(filename = "service_account.json")
@@ -21,7 +22,7 @@ access_secret = "QrCfFYjqkjLrIDKzJKSJqsX57uxhHMmG1SKz4EvuMjSeJ"
 # Authenticate to Twitter
 auth = tweepy.OAuthHandler(api_key,api_secrets)
 auth.set_access_token(access_token,access_secret)
-api = tweepy.API(auth)
+api = tweepy.API(auth, wait_on_rate_limit=True)
 
 # Making sure that this shit works
 try:
@@ -39,5 +40,7 @@ for i in range (0, numRows):
     # get latest 5 each investor twitter account follows
     twitterUser = api.get_user(screen_name = twitterHandle)
     twitterFollows = twitterUser.friends()
+    
     for i in range (0, 5):
-        wks.append_row([thisWeeksID, (str(twitterFollows[i].screen_name) + '_' + vcName), twitterFollows[i].screen_name, vcName])
+        wks.append_row([thisWeeksID, (str(twitterFollows[i].screen_name) + '_' + vcName), twitterFollows[i].screen_name, vcName, twitterFollows[i].description, str(twitterUser.screen_name), twitterUser.description])
+    time.sleep(5)
